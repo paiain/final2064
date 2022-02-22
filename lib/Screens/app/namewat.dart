@@ -1,7 +1,8 @@
 import 'dart:convert';
-
+import 'dart:ffi';
 import 'package:flutter/material.dart';
-import 'package:flutter_auth/Screens/Welcome/components/background.dart';
+import 'package:flutter_auth/Screens/Login/components/background.dart';
+
 import 'package:http/http.dart' as Http;
 
 class namewat extends StatefulWidget {
@@ -11,36 +12,82 @@ class namewat extends StatefulWidget {
 
 class _namewatState extends State<namewat> {
   var jsonData;
-  Map<String, int> data = {};
-  Future<String> _GetAPI() async {
+  List<TempleData> dataList = [];
+  // ignore: non_constant_identifier_names
+  Future<String> _GetData() async {
     var response = await Http.get(Uri.parse(
         'https://numvarn.github.io/resume/asset/files/templeprofile.json'));
-    jsonData = jsonDecode(utf8.decode(response.bodyBytes));
+    jsonData = json.decode(utf8.decode(response.bodyBytes));
 
-    print(jsonData);
+    for (var data in jsonData) {
+      TempleData news = TempleData(data['ชื่อ'], data['พระเกจิ']);
+      dataList.add(news);
+    }
 
-    return "ok";
+    return 'ok';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text('วัดศักดิ์สิทธิ์ในจังหวัดศรีสะเกษ'),
-        ),
-        body: Center(
+      appBar: AppBar(
+        title: Text('รายชื่อวัดภายในจังหวัดศรีสะเกษ'),
+      ),
+      body: Background(
           child: FutureBuilder(
-            future: _GetAPI(),
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
-              if (snapshot.hasData) {
-                return Text("hello");
-              } else {
-                return Center(
-                  child: CircularProgressIndicator(),
+        future: _GetData(),
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (snapshot.hasData) {
+            return ListView.builder(
+              itemCount: dataList.length,
+              itemBuilder: (context, index) {
+                return Container(
+                  child: Column(
+                    children: <Widget>[
+                      Container(
+                        margin: EdgeInsets.all(15),
+                        child: Align(
+                          child: Text(
+                            '${"ชื่อวัด : " + dataList[index].name}',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        margin: EdgeInsets.all(15),
+                        child: Align(
+                          child: Text(
+                            '${"พระเกจิ :" + dataList[index].monk}',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 20,
+                      ),
+                    ],
+                  ),
                 );
-              }
-            },
-          ),
-        ));
+              },
+            );
+          } else {
+            return Container(
+              child: CircularProgressIndicator(),
+            );
+          }
+        },
+      )),
+    );
   }
+}
+
+class TempleData {
+  String name;
+  String monk;
+
+  TempleData(
+    this.name,
+    this.monk,
+  );
 }
